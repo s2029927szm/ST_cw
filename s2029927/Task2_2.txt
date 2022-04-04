@@ -1,0 +1,262 @@
+
+Total Branches: 130
+Covered Branches: 122
+Missed Branches:8 (which contains partly covered branches 7, totally missed 1)
+
+<<----------------------------------------------------------------------------------->>
+****1****
+BRANCH NOT COVER: "if (option != null)" (doean't cover if(False), in terms of the "option" always has value.
+
+BRANCH FROM:
+/**
+public void setValueWithOptionName(String name, String value) {
+    	Option option = options.get(name);
+    	if (option != null) {
+    		option.setValue(value);
+    	}
+**/
+
+EXPLANATION:
+totally 3 call from Parser.java:
+1. in replace method :<<<*** if (optionMap.optionExists(varNameNoDash)) {
+					optionMap.setValueWithOptionName(varNameNoDash, var);
+				} ***>>>
+because 'varNameNoDash' has alwasys been checked by optionExists method (if not exist, will throw exception and never reach at setValueWithOptionName method). So here the input 'varNameNoDash' of setValueWithOptionName will always has a value.
+
+2. in replace method :<<<*** else {
+				if (optionMap.optionExists(varName)) {
+					optionMap.setValueWithOptionName(varName, var);
+				} ***>>>
+because the same reason as 1.1; the input 'varName' of setValueWithOptionName has been checked as not empty.
+
+3. in parse method: <<<*** if(isKeyOption) {
+				optionMap.setValueWithOptionName(key, value);
+			} ***>>>
+because the key has been checked as last assignment <<<*** key = isKeyOption ? key.substring(1) : key; ***>>> and the key takes value from splited 'commandLineOptions' which has been listed by the regular expression(regex). Therefore the key here never is empty.
+
+<<----------------------------------------------------------------------------------->>
+****2****
+BRANCH NOT COVER: "if (optionMap.shortcutExists(varNameNoDash))", only cover if(Ture)
+
+BRANCH FROM:
+/**
+else if (varName.startsWith("-")) {
+				String varNameNoDash = varName.substring(1);
+				if (optionMap.shortcutExists(varNameNoDash)) {
+					optionMap.setValueWithOptionShortcut(varNameNoDash, var);
+				}
+**/
+
+EXPLANATION: because 'varNameNoDash' get value from 'varName.substring(1)' and never be empty, because substring(1) method always overflow as index 1. if we want value empty we will set varname "-" and then substring(1) oveflow and out off the process!
+
+<<----------------------------------------------------------------------------------->>
+****3****
+BRANCH NOT COVER: "if (optionMap.optionExists(varNameNoDash))" the same as 2.1
+
+BRANCH FROM:
+/**
+if(varName.startsWith("--")) {
+				String varNameNoDash = varName.substring(2);
+				if (optionMap.optionExists(varNameNoDash)) {
+					optionMap.setValueWithOptionName(varNameNoDash, var);
+				}
+**/
+
+EXPLANATION: the same as 2.1, if we want empty input, then supstring(2) must overflow and out off process.
+
+<<----------------------------------------------------------------------------------->>
+****4****
+BRANCH NOT COVER: "default:" never trigger it
+
+BRANCH FROM:
+/**
+			default:
+				result = 0;
+**/
+
+EXPLANATION: Only when the type is 'NOTYPE' can trigger the default and cover these two lines (branch). However, if we define new option with type as 'NOTYPE', this will trigger error system out when store them in the Optionmap.store() function: <<<*** if (type == Type.NOTYPE || !isOptionValid(option, shortcut)) {
+   	throw new IllegalArgumentException("Illegal argument provided in store(....) method.");
+    	}***>>>
+
+<<----------------------------------------------------------------------------------->>
+****5****
+BRANCH NOT COVER: "switch (type)" Due to one case never trigger, thus the switch() cover partly.
+
+BRANCH FROM:
+/**
+public int getInteger(String optionName) {
+		String value = getString(optionName);
+		Type type = getType(optionName);
+		int result;
+		switch (type) {
+			case STRING:
+			case INTEGER:
+				try {
+					result = Integer.parseInt(value);
+				} catch (Exception e) {
+			        try {
+			            new BigInteger(value);
+			        } catch (Exception e1) {
+			        }
+			        result = 0;
+			    }
+				break;
+			case BOOLEAN:
+				result = getBoolean(optionName) ? 1 : 0;
+				break;
+			case CHARACTER:
+				result = (int) getCharacter(optionName);
+				break;
+			default:
+				result = 0;
+		}
+		return result;
+	}
+**/
+
+EXPLANATION: as explained on 4, thus the case only covered partly.(only miss the default)
+
+<<----------------------------------------------------------------------------------->>
+****6****
+BRANCH NOT COVER: "if (getType(key) == Type.BOOLEAN && (value.toLowerCase().equals("false") || value.equals("0")))" this partly trigger
+
+BRANCH FROM:
+/**
+// Explicitly convert boolean.
+			if (getType(key) == Type.BOOLEAN && (value.toLowerCase().equals("false") || value.equals("0"))) {
+				value = "";
+			}
+**/
+
+EXPLANATION: details in Summary in the end
+
+<<----------------------------------------------------------------------------------->>
+****7****
+BRANCH NOT COVER: "(value.startsWith("\"") && value.endsWith("\""))" this partly trigger
+
+BRANCH FROM:
+/**
+boolean isUnescapedValueInQuotes = (value.startsWith("\'") && value.endsWith("\'")) ||
+					(value.startsWith("\"") && value.endsWith("\""));
+**/
+
+EXPLANATION: details in Summary in the end
+
+<<----------------------------------------------------------------------------------->>
+****8****
+BRANCH NOT COVER: "getClass() != obj.getClass() || (name == null && other.name != null) || !name.equals(other.name)" this partly trigger
+
+BRANCH FROM:
+/**
+public boolean equals(Object obj) {
+		
+		Option other = (Option) obj;
+		boolean notEqual = obj == null || 
+				getClass() != obj.getClass() ||
+				(this.type != other.type) ||
+				(name == null && other.name != null) || !name.equals(other.name);
+		
+		return this == obj || !notEqual;
+	}
+**/
+
+EXPLANATION: 1. the two class assign the same inside of this method, so impossible to trigger both sides of this condition.
+2.name=null must trigger obj==null, thus it also impossible to trigger both side of the condition.
+3.because "||" or operation only process as former one fail.
+for example: a||b||c||d||e, if you want to test both sides of e, you must let a,b,c,d all fail. However, the final one "!name.equals(other.name)" never trigger both sides because it reuse equals() and this will trigger the 8.1 & 8.2 .
+
+
+<<----------------------------------------------------------------------------------->>
+<<----------------------------------------------------------------------------------->>
+
+Summary:
+
+I found one bug in the parse methods so it makes me unable to found some solutions to finish the task perfectly!
+
+Bug1:
+----------------------------------------------------------------------------------------
+Original Code:
+
+List<CustomPair> singleQuotePairs = findMatches(commandLineOptions, "(?<=\')(.*?)(?=\')");
+		List<CustomPair> doubleQuote = findMatches(commandLineOptions, "(?<=\")(.*?)(?=\")"); //$$$$$$$$$$ #1
+		List<CustomPair> assignPairs = findMatches(commandLineOptions, "(?<=\\=)(.*?)(?=[\\s]|$)");
+		
+		
+		for (CustomPair pair : singleQuotePairs) {
+			String cmd = commandLineOptions.substring(pair.getX(), pair.getY());
+			cmd = cmd.replaceAll("\"", "{D_QUOTE}").
+					  replaceAll(" ", "{SPACE}").
+					  replaceAll("-", "{DASH}").
+					  replaceAll("=", "{EQUALS}");
+	    	
+	    	commandLineOptions = commandLineOptions.replace(commandLineOptions.substring(pair.getX(),pair.getY()), cmd);
+	    	//$$$$$$$$$$$$$$$$#2
+		}
+		
+		for (CustomPair pair : doubleQuote) {
+			String cmd = commandLineOptions.substring(pair.getX(), pair.getY()); //$$$$$$$$$#3
+			cmd = cmd.replaceAll("\'", "{S_QUOTE}").
+					  replaceAll(" ", "{SPACE}").
+					  replaceAll("-", "{DASH}").
+					  replaceAll("=", "{EQUALS}");
+			
+	    	commandLineOptions = commandLineOptions.replace(commandLineOptions.substring(pair.getX(),pair.getY()), cmd);	
+		}
+		
+		for (CustomPair pair : assignPairs) {
+			String cmd = commandLineOptions.substring(pair.getX(), pair.getY());
+			cmd = cmd.replaceAll("\"", "{D_QUOTE}").
+					  replaceAll("\'", "{S_QUOTE}").
+					  replaceAll("-", "{DASH}");
+	    	commandLineOptions = commandLineOptions.replace(commandLineOptions.substring(pair.getX(),pair.getY()), cmd);	
+		}
+----------------------------------------------------------------------------------------
+Explain:
+#1 save index of doubleQuote by process with commandLineOptions
+#2 commandLineOptions has been changed, so here commandLineOptions* is not the same one in #1 commandLineOptions
+#3 the for loop use index of commandLineOptions to process commandLineOptions* trigger mismatch.
+
+
+Bug2:
+----------------------------------------------------------------------------------------
+Original Code:
+
+public void store(Option option, String shortcut) {
+    	String name = option.getName();
+    	Type type = option.getType();
+    	
+    	if (type == Type.NOTYPE || !isOptionValid(option, shortcut)) {
+    		throw new IllegalArgumentException("Illegal argument provided in store(....) method.");
+    	}
+    	
+    	if (optionExists(name)) { //$$$$$$$#1
+    		Option oldOption = getOption(name); //$$$$$$$#2
+    		oldOption.setType(type); //$$$$$$$#3
+    		
+    		options.put(name, oldOption); //$$$$$$$#4
+    		if (!shortcut.equals("")) { //$$$$$$$#5
+        		shortcuts.put(shortcut, oldOption); //$$$$$$$#6
+        	}
+    	} else {
+        	options.put(name, option);
+        	if (!shortcut.equals("")) {
+        		shortcuts.put(shortcut, option);
+        	}
+    	}
+    }
+
+----------------------------------------------------------------------------------------
+Explain:
+            <String, Option>(opts)  <String, Option>(scts)   type    oldOption
+before:        o1    x000123 (eg adress) O       x000124    t_old       null
+#1:            o1    x000123             O       x000124    t_old       null
+#2:            o1    x000123             O       x000124    t_old     x000123
+#3:            o1    x000123             O       x000124    t_new     x000123
+#4:            o1    x000123             O       x000124    t_new     x000123
+#5:unchanged
+#6:            o1    x000123             O       x000124    t_new     x000123
+Thus actually, the only change is the type. if the old option has value and assign new value to new option (the same name), so the shortcut couldn't access the old value because the assignment is processed by old adress and cover old value!
+Therefore, it's not the same as specification descriped: "old value can be access by shortcut".
+
+
+

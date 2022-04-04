@@ -1,0 +1,47 @@
+task2_2_FunctioinalTest:
+
+Test suit: 2
+Assert* use: 36
+Option create: 10
+Total instructions: 528
+Total lines: 107
+Total mrthods: 22
+Total complexity: 10
+Total branch: 12
+
+Coverage:
+Branch Coverage: 93.8%  (total branch, covered, missed): (130, 122, 8)
+Instruction Coverage: 99.8%  (total instruction, covered, missed): (1028, 1026, 2)
+Line Coverage: 99.5%  (total line, covered, missed): (214, 213, 1)
+Method Coverage: 100%  (total method, covered, missed): (44, 44, 0)
+Type Coverage: 100%  (total type, covered, missed): (5, 5, 0)
+Complexity Coverage: 92.7%  (total complexity, covered, missed): (110, 102, 8)
+
+<<----------------------------------------------------------------------------------->>
+
+task2_3_FunctioinalTest:
+
+Test suit: 1
+Assert* use: 18
+Option create: 9
+Total instructions: 389
+Total lines: 77
+Total mrthods: 12
+Total complexity: 9
+Total branch: 12
+
+Coverage:
+Branch Coverage: 88.5%  (total branch, covered, missed): (130, 115, 15)
+Instruction Coverage: 99.8%  (total instruction, covered, missed): (1028, 1026, 2)
+Line Coverage: 99.5%  (total line, covered, missed): (214, 213, 1)
+Method Coverage: 100%  (total method, covered, missed): (44, 44, 0)
+Type Coverage: 100%  (total type, covered, missed): (5, 5, 0)
+Complexity Coverage: 86.4%  (total complexity, covered, missed): (110, 95, 15)
+
+<<----------------------------------------------------------------------------------->>
+
+Summary:
+
+After revise the test suit from task2_2 to task2_3. The assert use and total instruction reduce dramaticly. Other indexes also reduce within exceptation. For coverage comparing, actually Instruction Coverage, Method Coverage, Line Coverage and Type Coverage keep the same. And the Instruction Coverage keeps very high as 99.8%. Although, there's some reduction of Branch Coverage and Complexity Coverage. According to the knowledge from class, statement coverage, branch coverage, decision coverage and condition coverage are all have slightly flaws on the extent of coverage for the real code. And the state coverage is comparely easier to achieve. Here, maybe the Instruction Coverage from the coverage tool. From what I learned, the compound condition coverage is closer to the real coverage of the code. However, it's not easy to access and implement that!
+
+
